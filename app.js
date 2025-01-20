@@ -25,8 +25,8 @@ addTaskBtn.addEventListener('click', async () => {
             taskInput.value = "";
         }
         renderTasks();
-        console.log("Task Added");
     }
+    console.log("Task Added");
 });
 async function addTaskToFirestore(taskText) {
     await addDoc(collection(db, "tasks"), {
