@@ -1,5 +1,5 @@
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc } from "firebase/firestore";
+import { initializeApp } from "/firebase/app";
+import { getFirestore, collection, addDoc } from "/firebase/firestore";
 
 const taskInput = document.getElementById('taskInput');
 const addTaskBtn = document.getElementById('addTaskBtn');
