@@ -1,5 +1,5 @@
-import { initializeApp } from "/firebase/app";
-import { getFirestore, collection, addDoc } from "/firebase/firestore";
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc, getDocs } from "firebase/firestore";
 
 const taskInput = document.getElementById('taskInput');
 const addTaskBtn = document.getElementById('addTaskBtn');
@@ -16,7 +16,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
 function sanitizeInput(input) {
     const div = document.createElement("div");
     div.textContent = input;
@@ -74,7 +73,7 @@ const sw = new URL('service-worker.js', import.meta.url)
 if ('serviceWorker' in navigator) {
     const s = navigator.serviceWorker;
     s.register(sw.href, {
-        scope: '/YOUR_REPOSITORY_NAME_HERE/'
+        scope: '/WebDevTrends/'
     })
         .then(_ => console.log('Service Worker Registered for scope:', sw.href,
             'with', import.meta.url))
