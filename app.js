@@ -1,8 +1,9 @@
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc } from "firebase/firestore";
+
 const taskInput = document.getElementById('taskInput');
 const addTaskBtn = document.getElementById('addTaskBtn');
 const taskList = document.getElementById('taskList');
-
-import { initializeApp } from "firebase/app";
 
 const firebaseConfig = {
     apiKey: "AIzaSyDo9nRtzMTFaGFfGWgqlcksi5Y9h7x46x0",
@@ -14,25 +15,20 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-
 const db = getFirestore(app);
 
-// Add Task
-// addTaskBtn.addEventListener('click', () => {
-//     const task = taskInput.value.trim();
-//     if (task) {
-//         const li = document.createElement('li');
-//         li.textContent = task;
-//         taskList.appendChild(li);
-//         taskInput.value = '';
-//     }
-// });
+function sanitizeInput(input) {
+    const div = document.createElement("div");
+    div.textContent = input;
+    return div.innerHTML;
+   }
+   
 
 addTaskBtn.addEventListener('click', async () => {
     const task = taskInput.value.trim();
     if (task) {
         const taskInput = document.getElementById("taskInput");
-        const taskText = taskInput.value.trim();
+        const taskText = sanitizeInput(taskInput.value.trim());
         if (taskText) {
             await addTaskToFirestore(taskText);
             renderTasks();
@@ -51,12 +47,28 @@ async function addTaskToFirestore(taskText) {
 }
 
 
-// Remove Task on Click
-taskList.addEventListener('click', (e) => {
-    if (e.target.tagName === 'LI') {
-        e.target.remove();
+async function renderTasks() {
+    var tasks = await getTasksFromFirestore();
+    taskList.innerHTML = "";
+   
+    tasks.forEach((task, index) => {
+    if(!task.data().completed){
+    const taskItem = document.createElement("li");
+    taskItem.id = task.id;
+    taskItem.textContent = task.data().text;
+    taskList.appendChild(taskItem);
     }
-});
+    });
+    }
+   async function getTasksFromFirestore() {
+    var data = await getDocs(collection(db, "todos"));
+    let userData = [];
+    data.forEach((doc) => {
+    userData.push(doc);
+    });
+    return userData;
+   }
+   
 
 const sw = new URL('service-worker.js', import.meta.url)
 if ('serviceWorker' in navigator) {
