@@ -32,20 +32,25 @@ addTaskBtn.addEventListener('click', async () => {
             await addTaskToFirestore(taskText);
             renderTasks();
             taskInput.value = "";
+            liveRegion.textContent = `New task added: ${taskText}`;
         }
         renderTasks();
     }
-    console.log("Task Added");
 });
 
 taskList.addEventListener('click', async (e) => {
     if (e.target.tagName === 'LI') {
-      await updateDoc(doc(db, "tasks", e.target.id), {
-        completed: true
-      });  
+        await updateDoc(doc(db, "tasks", e.target.id), {
+            completed: true
+        });
+        liveRegion.textContent = `Completed.`;
+        setTimeout(() => {
+            renderTasks();
+            liveRegion.textContent = `Ready.`;
+            console.log(liveRegion.textContent);
+        }, 1000);
     }
-    renderTasks();
-  });
+});
 
 async function addTaskToFirestore(taskText) {
     await addDoc(collection(db, "tasks"), {
@@ -65,6 +70,16 @@ async function renderTasks() {
             const taskItem = document.createElement("li");
             taskItem.id = task.id;
             taskItem.textContent = task.data().text;
+            taskItem.setAttribute('tabindex', '0');
+            taskItem.setAttribute('role', 'option');
+            taskItem.setAttribute('aria-selected', 'false');
+            taskItem.addEventListener('focus', () => {
+                taskItem.setAttribute('aria-selected', 'true');
+            });
+
+            taskItem.addEventListener('blur', () => {
+                taskItem.setAttribute('aria-selected', 'false');
+            });
             taskList.appendChild(taskItem);
         }
     });
