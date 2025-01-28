@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, getDocs } from "firebase/firestore";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "firebase/firestore";
 
 const taskInput = document.getElementById('taskInput');
 const addTaskBtn = document.getElementById('addTaskBtn');
@@ -20,8 +20,8 @@ function sanitizeInput(input) {
     const div = document.createElement("div");
     div.textContent = input;
     return div.innerHTML;
-   }
-   
+}
+
 
 addTaskBtn.addEventListener('click', async () => {
     const task = taskInput.value.trim();
@@ -37,6 +37,16 @@ addTaskBtn.addEventListener('click', async () => {
     }
     console.log("Task Added");
 });
+
+taskList.addEventListener('click', async (e) => {
+    if (e.target.tagName === 'LI') {
+      await updateDoc(doc(db, "tasks", e.target.id), {
+        completed: true
+      });  
+    }
+    renderTasks();
+  });
+
 async function addTaskToFirestore(taskText) {
     await addDoc(collection(db, "tasks"), {
         text: taskText,
@@ -49,25 +59,28 @@ async function addTaskToFirestore(taskText) {
 async function renderTasks() {
     var tasks = await getTasksFromFirestore();
     taskList.innerHTML = "";
-   
+
     tasks.forEach((task, index) => {
-    if(!task.data().completed){
-    const taskItem = document.createElement("li");
-    taskItem.id = task.id;
-    taskItem.textContent = task.data().text;
-    taskList.appendChild(taskItem);
-    }
+        if (!task.data().completed) {
+            const taskItem = document.createElement("li");
+            taskItem.id = task.id;
+            taskItem.textContent = task.data().text;
+            taskList.appendChild(taskItem);
+        }
     });
-    }
-   async function getTasksFromFirestore() {
-    var data = await getDocs(collection(db, "todos"));
+}
+
+window.addEventListener('load', renderTasks);
+
+async function getTasksFromFirestore() {
+    var data = await getDocs(collection(db, "tasks"));
     let userData = [];
     data.forEach((doc) => {
-    userData.push(doc);
+        userData.push(doc);
     });
     return userData;
-   }
-   
+}
+
 
 const sw = new URL('service-worker.js', import.meta.url)
 if ('serviceWorker' in navigator) {

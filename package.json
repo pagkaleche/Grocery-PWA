@@ -4,11 +4,9 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "start": "parcel index.html",
-    "build": "parcel build index.html",
-    "dev:build": "parcel build --dist-dir dist --no-content-hash index.html",
-    "dev:run": "npm run dev:build && npm run dev:start",
-    "dev:start": "parcel serve --dist-dir dist index.html",
+    "start": "vite",
+    "build": "vite build",
+    "serve": "vite preview",
     "lint": "eslint ."
   },
   "keywords": [],
@@ -19,7 +17,7 @@
     "firebase-admin": "^13.0.2",
     "gh-pages": "^6.3.0",
     "loglevel": "^1.9.2",
-    "parcel": "latest"
+    "vite": "^6.0.11"
   },
   "devDependencies": {
     "@eslint/js": "^9.18.0",
