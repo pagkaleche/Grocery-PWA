@@ -7,7 +7,6 @@ const FILES_TO_CACHE = [
     '/WebDevTrends/manifest.json',
     '/WebDevTrends/icons/icon-128.png',
     '/WebDevTrends/icons/icon-512.png'
-
 ];
 
 self.addEventListener('install', (event) => {

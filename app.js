@@ -102,10 +102,10 @@ async function getTasksFromFirestore() {
 }
 
 
-const sw = new URL('service-worker.js', import.meta.url)
+const sw = new URL('service-worker.js', import.meta.url);
 if ('serviceWorker' in navigator) {
     const s = navigator.serviceWorker;
-    s.register(sw.href, {
+    s.register('/WebDevTrends/service-worker.js', {
         scope: '/WebDevTrends/'
     })
         .then(_ => console.log('Service Worker Registered for scope:', sw.href,
