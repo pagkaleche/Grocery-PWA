@@ -6,9 +6,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#0078D7">
     <title>Checklist App</title>
-    <link rel="manifest" href="/assets/manifest-CUBjdg4J.json">
-  <script type="module" crossorigin src="/assets/index-IGTHtzJ6.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-B-mIENfF.css">
+    <link rel="manifest" href="/WebDevTrends/assets/manifest-CUBjdg4J.json">
+  <script type="module" crossorigin src="/WebDevTrends/assets/index-BTKqASHt.js"></script>
+  <link rel="stylesheet" crossorigin href="/WebDevTrends/assets/index-B-mIENfF.css">
 </head>
 
 <body>
@@ -17,6 +17,9 @@
         <input type="text" id="taskInput" placeholder="Enter a new task">
         <button id="addTaskBtn">Add Task</button>
         <ul id="taskList"></ul>
-    </div>
+        <div id="liveRegion" aria-live="polite" style="position: absolute; left: -9999px;"></div>
+    </div>
+    <button id="deleteAll">Delete All Tasks</button>
 </body>
+
 </html>
