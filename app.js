@@ -1,9 +1,10 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, doc } from "firebase/firestore";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, deleteDoc } from "firebase/firestore";
 
 const taskInput = document.getElementById('taskInput');
 const addTaskBtn = document.getElementById('addTaskBtn');
 const taskList = document.getElementById('taskList');
+const deleteAll=document.getElementById('deleteAll');
 
 const firebaseConfig = {
     apiKey: "AIzaSyDo9nRtzMTFaGFfGWgqlcksi5Y9h7x46x0",
@@ -50,6 +51,10 @@ taskList.addEventListener('click', async (e) => {
             console.log(liveRegion.textContent);
         }, 1000);
     }
+});
+
+deleteAll.addEventListener('click', async () => {
+    await deleteAllTasks();
 });
 
 async function addTaskToFirestore(taskText) {
@@ -108,3 +113,14 @@ if ('serviceWorker' in navigator) {
         .catch(err => console.error('Service Worker Error:', err));
 }
 
+async function deleteAllTasks() {
+    const tasksSnapshot = await getDocs(collection(db, "tasks"));
+    const deletePromises = tasksSnapshot.docs.map((task) => 
+        deleteDoc(doc(db, "tasks", task.id))
+    );
+
+    await Promise.all(deletePromises);
+    
+    console.log("All tasks deleted from Firestore");
+    renderTasks();
+}
