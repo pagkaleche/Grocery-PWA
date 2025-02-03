@@ -1,10 +1,14 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, deleteDoc } from "firebase/firestore";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, deleteDoc, query, where } from "firebase/firestore";
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const taskInput = document.getElementById('taskInput');
 const addTaskBtn = document.getElementById('addTaskBtn');
 const taskList = document.getElementById('taskList');
-const deleteAll=document.getElementById('deleteAll');
+const deleteAll = document.getElementById('deleteAll');
+const aiInput = document.getElementById('chat-input');
+const aiButton = document.getElementById('send-btn');
+const chatHistory = document.getElementById('chat-history');
 
 const firebaseConfig = {
     apiKey: "AIzaSyDo9nRtzMTFaGFfGWgqlcksi5Y9h7x46x0",
@@ -57,6 +61,17 @@ deleteAll.addEventListener('click', async () => {
     await deleteAllTasks();
 });
 
+async function getApiKey() {
+    let snapshot = await getDocs(doc(db, "apikey", "googlegenai"));
+    apiKey = snapshot.data().key;
+    genAI = new GoogleGenerativeAI(apiKey);
+    model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+}
+
+async function askChatBot(request) {
+    return await model.generateContent(request);
+}
+
 async function addTaskToFirestore(taskText) {
     await addDoc(collection(db, "tasks"), {
         text: taskText,
@@ -90,7 +105,12 @@ async function renderTasks() {
     });
 }
 
-window.addEventListener('load', renderTasks);
+window.addEventListener('load',
+    () => {
+        renderTasks();
+        getApiKey();
+    }
+);
 
 async function getTasksFromFirestore() {
     var data = await getDocs(collection(db, "tasks"));
@@ -102,25 +122,109 @@ async function getTasksFromFirestore() {
 }
 
 
-const sw = new URL('service-worker.js', import.meta.url);
+// const sw = new URL('service-worker.js', import.meta.url); problem
+const sw = '/WebDevTrends/service-worker.js'
 if ('serviceWorker' in navigator) {
     const s = navigator.serviceWorker;
-    s.register('/WebDevTrends/service-worker.js', {
+    s.register(sw, {
         scope: '/WebDevTrends/'
     })
-        .then(_ => console.log('Service Worker Registered for scope:', sw.href,
+        .then(_ => console.log('Service Worker Registered for scope:', sw,
             'with', import.meta.url))
         .catch(err => console.error('Service Worker Error:', err));
 }
 
 async function deleteAllTasks() {
     const tasksSnapshot = await getDocs(collection(db, "tasks"));
-    const deletePromises = tasksSnapshot.docs.map((task) => 
+    const deletePromises = tasksSnapshot.docs.map((task) =>
         deleteDoc(doc(db, "tasks", task.id))
     );
 
     await Promise.all(deletePromises);
-    
+
     console.log("All tasks deleted from Firestore");
     renderTasks();
+}
+
+
+function ruleChatBot(request) {
+    if (request.startsWith("add task")) {
+        let task = request.replace("add task", "").trim();
+        if (task) {
+            addTaskToFirestore(task);
+            appendMessage('Task ' + task + ' added!');
+            renderTasks();
+        } else {
+            appendMessage("Please specify a task to add.");
+        }
+        return true;
+    } else if (request.startsWith("complete")) {
+        let taskName = request.replace("complete", "").trim();
+        if (taskName) {
+            if (removeFromTaskName(taskName)) {
+                appendMessage('Task ' + taskName + ' marked as complete.');
+            } else {
+                appendMessage("Task not found!");
+            }
+
+        } else {
+            appendMessage("Please specify a task to complete.");
+        }
+        return true;
+    }
+
+    return false;
+}
+
+aiButton.addEventListener('click', async () => {
+    console.log("Send button clicked!");
+    let prompt = aiInput.value.trim().toLowerCase();
+    if (prompt) {
+        console.log("Prompt: ", prompt);
+        if (!ruleChatBot(prompt)) {
+            askChatBot(prompt);
+        }
+    } else {
+        appendMessage("Please enter a prompt")
+    }
+});
+
+function appendMessage(message) {
+    let history = document.createElement("div");
+    history.textContent = message;
+    history.className = 'history';
+    chatHistory.appendChild(history);
+    aiInput.value = "";
+}
+
+async function removeFromTaskName(taskName) {
+    const q = query(collection(db, "tasks"), where("text", "==", taskName));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+        querySnapshot.forEach(async (taskDoc) => {
+            try {
+                await updateDoc(taskDoc.ref, { completed: true });
+                console.log('Task marked as complete in Firestore:', taskName);
+
+                let ele = document.getElementsByName(taskName);
+                if (ele.length > 0) {
+                    ele.forEach(e => {
+                        removeTask(e.id);
+                        removeVisualTask(e.id);
+                    });
+                }
+                renderTasks();
+                appendMessage('Task ' + taskName + ' has been marked as complete.');
+            } catch (error) {
+                console.error("Error marking task as complete: ", error);
+                appendMessage("Error marking task as complete: " + error.message);
+            }
+        });
+    } else {
+        appendMessage("Task not found!");
+        return false;
+    }
+
+    return true;
 }
