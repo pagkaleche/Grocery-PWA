@@ -2,13 +2,26 @@ import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc, getDocs, updateDoc, doc, deleteDoc, query, where } from "firebase/firestore";
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const taskInput = document.getElementById('taskInput');
-const addTaskBtn = document.getElementById('addTaskBtn');
-const taskList = document.getElementById('taskList');
+const listIds = ['meatList', 'dairyList', 'vegetablesList', 'fruitList', 'snacksList'];
+const lists = {};
+
+listIds.forEach((id) => {
+    lists[id] = document.getElementById(id);
+});
+
+const meat = lists['meatList'];
+const dairy = lists['dairyList'];
+const vegetable = lists['vegetablesList'];
+const fruit = lists['fruitList'];
+const snacks = lists['snacksList'];
+
+const listInput = document.getElementById('listInput');
+const addListBtn = document.getElementById('addListBtn');
 const deleteAll = document.getElementById('deleteAll');
 const aiInput = document.getElementById('chat-input');
 const aiButton = document.getElementById('send-btn');
 const chatHistory = document.getElementById('chat-history');
+const chatbotToggle = document.getElementById('chatbot-toggle');
 
 const firebaseConfig = {
     apiKey: "AIzaSyDo9nRtzMTFaGFfGWgqlcksi5Y9h7x46x0",
@@ -28,37 +41,40 @@ function sanitizeInput(input) {
 }
 
 
-addTaskBtn.addEventListener('click', async () => {
-    const task = taskInput.value.trim();
-    if (task) {
-        const taskInput = document.getElementById("taskInput");
-        const taskText = sanitizeInput(taskInput.value.trim());
-        if (taskText) {
-            await addTaskToFirestore(taskText);
-            renderTasks();
-            taskInput.value = "";
-            liveRegion.textContent = `New task added: ${taskText}`;
+addListBtn.addEventListener('click', async () => {
+    const list = listInput.value.trim();
+    if (list) {
+        const listInput = document.getElementById("listInput");
+        const listCategory = document.getElementById("category").value;
+        const listText = sanitizeInput(listInput.value.trim());
+        if (listText) {
+            await addListToFirestore(listText, listCategory);
+            renderList();
+            listInput.value = "";
+            liveRegion.textContent = `New list added: ${listText}`;
         }
-        renderTasks();
+        renderList();
     }
 });
 
-taskList.addEventListener('click', async (e) => {
-    if (e.target.tagName === 'LI') {
-        await updateDoc(doc(db, "tasks", e.target.id), {
-            completed: true
-        });
-        liveRegion.textContent = `Completed.`;
-        setTimeout(() => {
-            renderTasks();
-            liveRegion.textContent = `Ready.`;
-            console.log(liveRegion.textContent);
-        }, 1000);
-    }
+Object.values(lists).forEach(list => {
+    list.addEventListener('click', async (e) => {
+        if (e.target.tagName === 'LI') {
+            await updateDoc(doc(db, "grocery", e.target.id), {
+                completed: true
+            });
+            liveRegion.textContent = `Completed.`;
+            setTimeout(() => {
+                renderList();
+                liveRegion.textContent = `Ready.`;
+                console.log(liveRegion.textContent);
+            }, 1000);
+        }
+    });
 });
 
 deleteAll.addEventListener('click', async () => {
-    await deleteAllTasks();
+    await deleteAlllist();
 });
 
 async function getApiKey() {
@@ -72,48 +88,55 @@ async function askChatBot(request) {
     return await model.generateContent(request);
 }
 
-async function addTaskToFirestore(taskText) {
-    await addDoc(collection(db, "tasks"), {
-        text: taskText,
+async function addListToFirestore(listText, listCategory) {
+    await addDoc(collection(db, "grocery"), {
+        text: listText,
+        category: listCategory,
         completed: false
     });
-    console.log("Task Added to Firestore");
+    console.log("list Added to Firestore");
 }
 
 
-async function renderTasks() {
-    var tasks = await getTasksFromFirestore();
-    taskList.innerHTML = "";
+async function renderList() {
+    var list = await getListFromFirestore();
+    Object.values(lists).forEach(listElement => {
+        listElement.innerHTML = "";
+    });
 
-    tasks.forEach((task, index) => {
-        if (!task.data().completed) {
-            const taskItem = document.createElement("li");
-            taskItem.id = task.id;
-            taskItem.textContent = task.data().text;
-            taskItem.setAttribute('tabindex', '0');
-            taskItem.setAttribute('role', 'option');
-            taskItem.setAttribute('aria-selected', 'false');
-            taskItem.addEventListener('focus', () => {
-                taskItem.setAttribute('aria-selected', 'true');
+    list.forEach((list, index) => {
+        if (!list.data().completed) {
+            const listItem = document.createElement("li");
+            listItem.id = list.id;
+            listItem.textContent = list.data().text;
+            listItem.setAttribute('tabindex', '0');
+            listItem.setAttribute('role', 'option');
+            listItem.setAttribute('aria-selected', 'false');
+            listItem.addEventListener('focus', () => {
+                listItem.setAttribute('aria-selected', 'true');
             });
 
-            taskItem.addEventListener('blur', () => {
-                taskItem.setAttribute('aria-selected', 'false');
+            listItem.addEventListener('blur', () => {
+                listItem.setAttribute('aria-selected', 'false');
             });
-            taskList.appendChild(taskItem);
+
+            const category = list.data().category + "List";
+            if (lists[category]) {
+                lists[category].appendChild(listItem);
+            }
         }
     });
+    listIds.forEach(hideCategory);
 }
 
-window.addEventListener('load',
-    () => {
-        renderTasks();
-        getApiKey();
-    }
-);
+window.addEventListener('DOMContentLoaded', () => {
+    renderList();
+    getApiKey();
+});
 
-async function getTasksFromFirestore() {
-    var data = await getDocs(collection(db, "tasks"));
+
+async function getListFromFirestore() {
+    var data = await getDocs(collection(db, "grocery"));
     let userData = [];
     data.forEach((doc) => {
         userData.push(doc);
@@ -134,41 +157,41 @@ if ('serviceWorker' in navigator) {
         .catch(err => console.error('Service Worker Error:', err));
 }
 
-async function deleteAllTasks() {
-    const tasksSnapshot = await getDocs(collection(db, "tasks"));
-    const deletePromises = tasksSnapshot.docs.map((task) =>
-        deleteDoc(doc(db, "tasks", task.id))
+async function deleteAlllist() {
+    const listSnapshot = await getDocs(collection(db, "list"));
+    const deletePromises = listSnapshot.docs.map((list) =>
+        deleteDoc(doc(db, "list", list.id))
     );
 
     await Promise.all(deletePromises);
 
-    console.log("All tasks deleted from Firestore");
-    renderTasks();
+    console.log("All list deleted from Firestore");
+    renderList();
 }
 
 
 function ruleChatBot(request) {
-    if (request.startsWith("add task")) {
-        let task = request.replace("add task", "").trim();
-        if (task) {
-            addTaskToFirestore(task);
-            appendMessage('Task ' + task + ' added!');
-            renderTasks();
+    if (request.startsWith("add list")) {
+        let list = request.replace("add list", "").trim();
+        if (list) {
+            addListToFirestore(list);
+            appendMessage('list ' + list + ' added!');
+            renderList();
         } else {
-            appendMessage("Please specify a task to add.");
+            appendMessage("Please specify a list to add.");
         }
         return true;
     } else if (request.startsWith("complete")) {
-        let taskName = request.replace("complete", "").trim();
-        if (taskName) {
-            if (removeFromTaskName(taskName)) {
-                appendMessage('Task ' + taskName + ' marked as complete.');
+        let listName = request.replace("complete", "").trim();
+        if (listName) {
+            if (removeFromlistName(listName)) {
+                appendMessage('list ' + listName + ' marked as complete.');
             } else {
-                appendMessage("Task not found!");
+                appendMessage("list not found!");
             }
 
         } else {
-            appendMessage("Please specify a task to complete.");
+            appendMessage("Please specify a list to complete.");
         }
         return true;
     }
@@ -197,34 +220,77 @@ function appendMessage(message) {
     aiInput.value = "";
 }
 
-async function removeFromTaskName(taskName) {
-    const q = query(collection(db, "tasks"), where("text", "==", taskName));
+async function removeFromlistName(listName) {
+    const q = query(collection(db, "list"), where("text", "==", listName));
     const querySnapshot = await getDocs(q);
 
     if (!querySnapshot.empty) {
-        querySnapshot.forEach(async (taskDoc) => {
+        querySnapshot.forEach(async (listDoc) => {
             try {
-                await updateDoc(taskDoc.ref, { completed: true });
-                console.log('Task marked as complete in Firestore:', taskName);
+                await updateDoc(listDoc.ref, { completed: true });
+                console.log('list marked as complete in Firestore:', listName);
 
-                let ele = document.getElementsByName(taskName);
+                let ele = document.getElementsByName(listName);
                 if (ele.length > 0) {
                     ele.forEach(e => {
-                        removeTask(e.id);
-                        removeVisualTask(e.id);
+                        removelist(e.id);
+                        removeVisuallist(e.id);
                     });
                 }
-                renderTasks();
-                appendMessage('Task ' + taskName + ' has been marked as complete.');
+                renderList();
+                appendMessage('list ' + listName + ' has been marked as complete.');
             } catch (error) {
-                console.error("Error marking task as complete: ", error);
-                appendMessage("Error marking task as complete: " + error.message);
+                console.error("Error marking list as complete: ", error);
+                appendMessage("Error marking list as complete: " + error.message);
             }
         });
     } else {
-        appendMessage("Task not found!");
+        appendMessage("list not found!");
         return false;
     }
 
     return true;
 }
+
+function hideCategory(categoryId) {
+    console.log(`Checking category: ${categoryId}`); // Debugging log to see which category we're checking
+
+    let categoryDiv = document.querySelector(`#${categoryId}`).closest('.list-category');
+    console.log(`Found categoryDiv:`, categoryDiv); // Log to see if we find the category div
+
+    if (categoryDiv) {
+        const list = categoryDiv.querySelector('ul'); // Find the <ul> inside the category div
+        console.log(`Found list for ${categoryId}:`, list); // Log to see the <ul> element
+        
+        if (list && list.children.length === 0) {
+            console.log(`No items in ${categoryId}. Hiding category.`); // Log when category is hidden
+            categoryDiv.style.display = 'none'; // Hide the entire category div if the list is empty
+        } else {
+            console.log(`Items found in ${categoryId}. Showing category.`); // Log when category is shown
+            categoryDiv.style.display = 'block'; // Show the category if it has items
+        }
+    } else {
+        console.warn(`Element with ID "${categoryId}" not found.`); // Log warning if category div is not found
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const chatbotContainer = document.getElementById('chatbot-container');
+    const chatbotToggle = document.getElementById('chatbot-toggle');
+    const hideChat = document.getElementById('hide-chat');
+
+    // Show chatbox & hide "Chat" button when clicked
+    chatbotToggle.addEventListener('click', () => {
+        chatbotContainer.style.display = 'block';
+        chatbotToggle.style.display = 'none';
+    });
+
+    // Hide chatbox & show "Chat" button when clicked
+    hideChat.addEventListener('click', () => {
+        chatbotContainer.style.display = 'none';
+        chatbotToggle.style.display = 'inline-block';
+    });
+});
+
+
+

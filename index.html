@@ -12,19 +12,60 @@
 </head>
 
 <body>
-    <h1>My To-Do List</h1>
+    <h1>Groceries</h1>
+    <div class="list-container">
+        <div class="list-category">
+            <h2>Meat:</h2>
+            <div class="list-group">
+                <ul id="meatList"></ul>
+            </div>
+        </div>
+        <div class="list-category">
+            <h2>Vegetables:</h2>
+            <div class="list-group">
+                <ul id="vegetablesList"></ul>
+            </div>
+        </div>
+        <div class="list-category">
+            <h2>Dairy:</h2>
+            <div class="list-group">
+                <ul id="dairyList"></ul>
+            </div>
+        </div>
+        <div class="list-category">
+            <h2>Fruits:</h2>
+            <div class="list-group">
+                <ul id="fruitList"></ul>
+            </div>
+        </div>
+        <div class="list-category">
+            <h2>Snacks:</h2>
+            <div class="list-group">
+                <ul id="snacksList"></ul>
+            </div>
+        </div>
+    </div>
     <div class="container">
-        <input type="text" id="taskInput" placeholder="Enter a new task">
-        <button id="addTaskBtn">Add Task</button>
+        <input type="text" id="listInput" placeholder="Enter a new item">
+        <select id="category">
+            <option value="meat">Meat</option>
+            <option value="vegetables">Vegetables</option>
+            <option value="dairy">Dairy</option>
+            <option value="fruits">Fruits</option>
+            <option value="snacks">Snacks</option>
+        </select>
+        <button id="addListBtn">Add Task</button>
         <ul id="taskList"></ul>
         <div id="liveRegion" aria-live="polite" style="position: absolute; left: -9999px;"></div>
     </div>
-    <button id="deleteAll">Delete All Tasks</button>
+    <button id="deleteAll">Delete List</button>
     <div id="chatbot-container">
         <div id="chat-history"></div>
         <input type="text" id="chat-input">
         <button id="send-btn">Send</button>
+        <button id="hide-chat">Hide</button>
     </div>
+    <button id="chatbot-toggle">Chat Bot</button>
     <script type="module" src="app.js"></script>
 </body>
 
