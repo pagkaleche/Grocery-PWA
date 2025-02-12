@@ -200,7 +200,6 @@ function ruleChatBot(request) {
 }
 
 aiButton.addEventListener('click', async () => {
-    console.log("Send button clicked!");
     let prompt = aiInput.value.trim().toLowerCase();
     if (prompt) {
         console.log("Prompt: ", prompt);
@@ -253,24 +252,17 @@ async function removeFromlistName(listName) {
 }
 
 function hideCategory(categoryId) {
-    console.log(`Checking category: ${categoryId}`); // Debugging log to see which category we're checking
-
+    
     let categoryDiv = document.querySelector(`#${categoryId}`).closest('.list-category');
-    console.log(`Found categoryDiv:`, categoryDiv); // Log to see if we find the category div
-
+    
     if (categoryDiv) {
-        const list = categoryDiv.querySelector('ul'); // Find the <ul> inside the category div
-        console.log(`Found list for ${categoryId}:`, list); // Log to see the <ul> element
+        const list = categoryDiv.querySelector('ul');
         
         if (list && list.children.length === 0) {
-            console.log(`No items in ${categoryId}. Hiding category.`); // Log when category is hidden
-            categoryDiv.style.display = 'none'; // Hide the entire category div if the list is empty
+             categoryDiv.style.display = 'none';
         } else {
-            console.log(`Items found in ${categoryId}. Showing category.`); // Log when category is shown
-            categoryDiv.style.display = 'block'; // Show the category if it has items
+             categoryDiv.style.display = 'block'; 
         }
-    } else {
-        console.warn(`Element with ID "${categoryId}" not found.`); // Log warning if category div is not found
     }
 }
 
@@ -279,13 +271,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatbotToggle = document.getElementById('chatbot-toggle');
     const hideChat = document.getElementById('hide-chat');
 
-    // Show chatbox & hide "Chat" button when clicked
     chatbotToggle.addEventListener('click', () => {
         chatbotContainer.style.display = 'block';
         chatbotToggle.style.display = 'none';
     });
 
-    // Hide chatbox & show "Chat" button when clicked
     hideChat.addEventListener('click', () => {
         chatbotContainer.style.display = 'none';
         chatbotToggle.style.display = 'inline-block';
