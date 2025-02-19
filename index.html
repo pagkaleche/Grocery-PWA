@@ -8,65 +8,106 @@
     <title>Checklist App</title>
     <link rel="icon" href="/WebDevTrends/assets/favicon-BeTi6YaB.ico" type="image/x-icon">
     <link rel="manifest" href="/WebDevTrends/assets/manifest-CUBjdg4J.json">
-  <script type="module" crossorigin src="/WebDevTrends/assets/index-D1coZsxp.js"></script>
-  <link rel="stylesheet" crossorigin href="/WebDevTrends/assets/index-PW4ac2nU.css">
+  <script type="module" crossorigin src="/WebDevTrends/assets/index-CEkHUmx7.js"></script>
+  <link rel="stylesheet" crossorigin href="/WebDevTrends/assets/index-Cs8bqDmP.css">
 </head>
 
 <body>
-    <h1>Groceries</h1>
-    <div class="list-container">
-        <div class="list-category">
-            <h2>Meat:</h2>
-            <div class="list-group">
-                <ul id="meatList"></ul>
+    <header id="header">
+        <h1>Shop Lister</h1>
+        <button id="logoutBtn" aria-label="Logout">Logout</button>
+    </header>
+
+    <main id="login-form" class="login-form">
+        <h2>Login</h2>
+        <form>
+            <label for="email">Email</label>
+            <input type="email" id="email" placeholder="Enter your email" aria-required="true" aria-describedby="email-help">
+            <small id="email-help" class="form-text text-muted">We'll never share your email with anyone else.</small>
+
+            <label for="password">Password</label>
+            <input type="password" id="password" placeholder="Enter your password" aria-required="true">
+
+            <button type="submit" id="loginBtn">Login</button>
+            <button type="button" id="registerBtn">Register</button>
+
+            <p id="error-message" style="color: red;" aria-live="assertive"></p>
+        </form>
+    </main>
+
+    <main id="main-container">
+        <section class="list-container">
+            <div class="list-category" aria-labelledby="meat-list">
+                <h2 id="meat-list" tabindex="0">Meat:</h2>
+                <div class="list-group">
+                    <ul id="meatList" aria-labelledby="meat-list"></ul>
+                </div>
             </div>
-        </div>
-        <div class="list-category">
-            <h2>Vegetables:</h2>
-            <div class="list-group">
-                <ul id="vegetablesList"></ul>
+
+            <div class="list-category" aria-labelledby="vegetables-list">
+                <h2 id="vegetables-list" tabindex="0">Vegetables:</h2>
+                <div class="list-group">
+                    <ul id="vegetablesList" aria-labelledby="vegetables-list"></ul>
+                </div>
             </div>
-        </div>
-        <div class="list-category">
-            <h2>Dairy:</h2>
-            <div class="list-group">
-                <ul id="dairyList"></ul>
+
+            <div class="list-category" aria-labelledby="dairy-list">
+                <h2 id="dairy-list" tabindex="0">Dairy:</h2>
+                <div class="list-group">
+                    <ul id="dairyList" aria-labelledby="dairy-list"></ul>
+                </div>
             </div>
-        </div>
-        <div class="list-category">
-            <h2>Fruits:</h2>
-            <div class="list-group">
-                <ul id="fruitList"></ul>
+
+            <div class="list-category" aria-labelledby="fruit-list">
+                <h2 id="fruit-list" tabindex="0">Fruits:</h2>
+                <div class="list-group">
+                    <ul id="fruitList" aria-labelledby="fruit-list"></ul>
+                </div>
             </div>
-        </div>
-        <div class="list-category">
-            <h2>Snacks:</h2>
-            <div class="list-group">
-                <ul id="snacksList"></ul>
+
+            <div class="list-category" aria-labelledby="snacks-list">
+                <h2 id="snacks-list" tabindex="0">Snacks:</h2>
+                <div class="list-group">
+                    <ul id="snacksList" aria-labelledby="snacks-list"></ul>
+                </div>
             </div>
-        </div>
-    </div>
-    <div class="container">
-        <input type="text" id="listInput" placeholder="Enter a new item">
-        <select id="category">
-            <option value="meat">Meat</option>
-            <option value="vegetables">Vegetables</option>
-            <option value="dairy">Dairy</option>
-            <option value="fruits">Fruits</option>
-            <option value="snacks">Snacks</option>
-        </select>
-        <button id="addListBtn">Add Task</button>
-        <ul id="taskList"></ul>
-        <div id="liveRegion" aria-live="polite" style="position: absolute; left: -9999px;"></div>
-    </div>
-    <button id="deleteAll">Delete List</button>
-    <div id="chatbot-container">
-        <div id="chat-history"></div>
-        <input type="text" id="chat-input">
-        <button id="send-btn">Send</button>
-        <button id="hide-chat">Hide</button>
-    </div>
-    <button id="chatbot-toggle">Chat Bot</button>
+        </section>
+
+        <section id="emptyList" aria-live="assertive">
+            <h2>Your grocery list is empty.</h2>
+        </section>
+
+        <section class="container" style="margin-top: 8rem;">
+            <label for="listInput">Enter a new item:</label>
+            <input type="text" id="listInput" aria-required="true">
+
+            <label for="category">Choose a category:</label>
+            <select id="category" aria-required="true">
+                <option value="meat">Meat</option>
+                <option value="vegetables">Vegetables</option>
+                <option value="dairy">Dairy</option>
+                <option value="fruits">Fruits</option>
+                <option value="snacks">Snacks</option>
+            </select>
+
+            <button id="addListBtn">Add Item</button>
+            <ul id="taskList" aria-live="polite"></ul>
+
+            <div id="liveRegion" aria-live="polite" style="position: absolute; left: -9999px;"></div>
+        </section>
+
+        <!-- Chatbot Section -->
+        <section id="chatbot-container" role="dialog" aria-labelledby="chatbot-toggle" aria-hidden="true">
+            <div id="chat-history" aria-live="polite"></div>
+            <label for="chat-input">Enter your message:</label>
+            <input type="text" id="chat-input">
+            <button id="send-btn">Send</button>
+            <button id="hide-chat">Hide</button>
+        </section>
+
+        <button id="chatbot-toggle">Chat Bot</button>
+    </main>
+
 </body>
 
 </html>
