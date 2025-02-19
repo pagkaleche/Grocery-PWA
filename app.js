@@ -1,5 +1,5 @@
 import { db, auth } from "./firebase.js";
-import { collection, addDoc, getDocs, setDoc, updateDoc, doc, getDoc, } from "firebase/firestore";
+import { onSnapshot, collection, addDoc, getDocs, setDoc, updateDoc, doc, getDoc, } from "firebase/firestore";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -106,6 +106,22 @@ auth.onAuthStateChanged((user) => {
         loginForm.style.display = 'none';
         mainContainer.style.display = 'block';
         const userId = user.uid;
+        const listRef = collection(db, "groceries", userId, "list");
+
+        const unsubscribe = onSnapshot(listRef, (snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === "added") {
+                    console.log("New data available offline:", change.doc.data());
+                }
+            });
+        });
+
+        window.addEventListener("online", () => {
+            console.log("Syncing data...");
+            onSnapshot(listRef, (snapshot) => {
+                snapshot.docs.forEach((doc) => console.log("Synced:", doc.data()));
+            });
+        });
 
         const createGroceryList = async (userId, groceryItems) => {
             try {
