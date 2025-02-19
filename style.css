@@ -1,47 +1,79 @@
+/* General Styles */
 body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
     text-align: center;
-    background-color:
-        #f4f4f4;
+    background-color: #f4f4f4;
+}
+
+header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #0078D7;
+    color: white;
+    padding: 10px;
+}
+
+#logoutBtn {
+    background-color: #0078D7;
+    color: white;
+    padding: 10px;
+    margin: 0;
+    border: none;
+    cursor: pointer;
+    position: absolute;
+    right: 0;
+    margin-right: 20px;
 }
 
 h1 {
-    background-color:
-        #0078D7;
-    color:
-        white;
+    background-color: #0078D7;
+    color: white;
     padding: 10px;
+    margin: 0;
 }
 
 .container {
     margin: 20px auto;
-    max-width: auto;
+    max-width: 90%;
+    padding: 10px;
+}
+
+#login-form {
+    margin-top: 50px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .list-container {
-    margin: auto;
     display: flex;
-    justify-content: space-evenly;
     flex-wrap: wrap;
-
+    justify-content: center;
+    gap: 40px;
+    padding: 20px;
 }
 
 .list-category {
+    width: 100%;
+    max-width: 300px;
     margin: 5px;
-    width: 20%;
+    box-sizing: border-box;
 }
 
 .list-group {
     margin: 0;
-    /* border-width: 1px;
-    border-style: solid;
-    border-radius: 5px; */
 }
 
 input[type="text"] {
-    width: 20%;
+    width: 100%;
     padding: 10px;
     margin-right: 5px;
     border: 1px solid #ccc;
@@ -49,26 +81,26 @@ input[type="text"] {
 }
 
 select {
-    width: 20%;
+    width: 100%;
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
+    margin: 10px 0;
 }
 
 button {
     padding: 10px 15px;
-    background-color:
-        #0078D7;
-    color:
-        white;
+    background-color: #0078D7;
+    color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 button:hover {
-    background-color:
-        #005bb5;
+    background-color: #005bb5;
 }
 
 ul {
@@ -77,14 +109,14 @@ ul {
 }
 
 li {
-    background:
-        white;
+    background: white;
     margin: 5px 0;
     padding: 10px;
     border: 1px solid #ccc;
     border-radius: 4px;
 }
 
+/* Chatbot Styles */
 #chatbot-toggle {
     position: fixed;
     bottom: 20px;
@@ -148,4 +180,135 @@ li {
 
 .history {
     padding-bottom: 15px;
+}
+
+/* Media Queries for responsiveness */
+@media (max-width: 768px) {
+    .list-category {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .container {
+        max-width: 100%;
+    }
+
+    input[type="text"],
+    select,
+    #logoutBtn {
+        width: 10%;
+    }
+
+    #login-form {
+        margin-top: 20px;
+        padding: 15px;
+        width: 90%;
+        max-width: none;
+    }
+
+    input,
+    button {
+        font-size: 16px;
+        padding: 10px;
+        margin-top: 10px;
+    }
+
+    button {
+        width: 20%;
+    }
+
+    #chatbot-toggle {
+        width: 100px;
+    }
+
+    #chatbot-container {
+        width: 250px;
+    }
+
+    li {
+        margin: 0 8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    h1 {
+        font-size: 18px;
+        padding: 5px;
+    }
+
+    .list-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .list-category {
+        width: 100%;
+    }
+
+    #logoutBtn {
+        width: 20%;
+    }
+
+    button {
+        width: 60%;
+        margin: 10px 0;
+    }
+
+    input[type="text"] {
+        width: 70%;
+    }
+
+    select {
+        width: 40%;
+    }
+
+    #chatbot-container {
+        width: 230px;
+    }
+
+    #hide-chat {
+        margin-left: 0px;
+    }
+
+    li {
+        margin: 0 4rem;
+    }
+}
+
+@media (min-width: 769px) {
+    .container {
+        max-width: 1200px;
+        padding: 20px;
+    }
+
+    .list-container {
+        justify-content: flex-start;
+    }
+
+    .list-category {
+        width: 33%;
+        max-width: 350px;
+    }
+
+    input[type="text"],
+    select,
+    button {
+        width: auto;
+        max-width: 500px;
+        margin-right: 10px;
+    }
+
+    #chatbot-container {
+        width: 300px;
+    }
+
+    #loginBtn, #registerBtn {
+        width: 100px;
+        margin-top: 10px;
+    }
+
+    #email, #password {
+        width: 70%;
+        margin-top: 10px;
+    }
 }
