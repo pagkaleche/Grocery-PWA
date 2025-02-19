@@ -1,4 +1,3 @@
-/* General Styles */
 body {
     font-family: Arial, sans-serif;
     margin: 0;
@@ -51,6 +50,51 @@ h1 {
     max-width: 400px;
     margin-left: auto;
     margin-right: auto;
+}
+
+form {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#email, #password {
+    width: 80%;
+    padding: 10px;
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+
+#listInput {
+    width: 30%;
+    padding: 10px;
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+
+#category {
+    width: 30%;
+    padding: 10px;
+    margin-top: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+
+.listForm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 .list-container {
@@ -116,7 +160,6 @@ li {
     border-radius: 4px;
 }
 
-/* Chatbot Styles */
 #chatbot-toggle {
     position: fixed;
     bottom: 20px;
@@ -182,7 +225,6 @@ li {
     padding-bottom: 15px;
 }
 
-/* Media Queries for responsiveness */
 @media (max-width: 768px) {
     .list-category {
         width: 100%;
@@ -197,6 +239,11 @@ li {
     select,
     #logoutBtn {
         width: 10%;
+    }
+
+    #loginBtn, #registerBtn {
+        width: 100%;
+        margin-top: 10px;
     }
 
     #login-form {
@@ -293,9 +340,16 @@ li {
     input[type="text"],
     select,
     button {
-        width: auto;
         max-width: 500px;
         margin-right: 10px;
+    }
+
+    #listInput {
+        width: 30%;
+    }
+
+    #addListBtn {
+        width: 20%;
     }
 
     #chatbot-container {
@@ -303,12 +357,17 @@ li {
     }
 
     #loginBtn, #registerBtn {
-        width: 100px;
+        width: 100%;
         margin-top: 10px;
     }
 
+    #logoutBtn, #chatbot-toggle {
+        width: 100px;
+    }
+
     #email, #password {
-        width: 70%;
+        width: 80%;
         margin-top: 10px;
+        padding: 10px;
     }
 }

@@ -1,6 +1,6 @@
 import { db, auth } from "./firebase.js";
-import { collection, addDoc, getDocs, setDoc, updateDoc, doc, query, where, getDoc, } from "firebase/firestore";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
+import { collection, addDoc, getDocs, setDoc, updateDoc, doc, getDoc, } from "firebase/firestore";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const listIds = ['meatList', 'dairyList', 'vegetablesList', 'fruitList', 'snacksList'];
@@ -57,19 +57,24 @@ const addUserToFirestore = async (userId, email) => {
 };
 
 const loginUser = async (email, password) => {
+    if (!email || !password) {
+        console.error("Email and password are required.");
+        return;
+    }
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
-        alert("Login successful.");
+        console.log("User logged in:", userCredential.user);
     } catch (error) {
-        alert("Email or password is incorrect. Please try again.");
-        errorMessage.textContent = `Error: ${error.message}`;
+        console.error("Login error:", error.message);
+        alert("Login failed: " + error.message);
     }
 };
 
 loginBtn.addEventListener('click', async () => {
     const email = emailInput.value;
     const password = passwordInput.value;
+    console.log("Logging in with email:", email, "and password", password
+    );
     await loginUser(email, password);
 });
 
@@ -80,7 +85,13 @@ registerBtn.addEventListener('click', async () => {
 });
 
 logoutBtn.addEventListener('click', async () => {
-    await auth.signOut();
+    try {
+        await signOut(auth);
+        window.location.reload();
+        console.log("User signed out.");
+    } catch (error) {
+        console.error("Error signing out:", error);
+    }
 });
 
 function sanitizeInput(input) {
@@ -91,6 +102,7 @@ function sanitizeInput(input) {
 
 auth.onAuthStateChanged((user) => {
     if (user) {
+        logoutBtn.style.display = 'block';
         loginForm.style.display = 'none';
         mainContainer.style.display = 'block';
         const userId = user.uid;
@@ -167,8 +179,12 @@ auth.onAuthStateChanged((user) => {
 
         const renderList = async () => {
             const groceryList = await fetchUserGroceryList(userId);
-    
-            // Object.values(categories).forEach(category => category.innerHTML = "");
+
+            meat.innerHTML = "";
+            dairy.innerHTML = "";
+            vegetable.innerHTML = "";
+            fruit.innerHTML = "";
+            snacks.innerHTML = "";
 
             groceryList.forEach((item) => {
                 if (!item.completed) {
