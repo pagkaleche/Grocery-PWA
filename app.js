@@ -294,7 +294,7 @@ auth.onAuthStateChanged((user) => {
             return false;
         }
     } else {
-        loginForm.style.display = 'block';
+        loginForm.style.display = 'flex';
         mainContainer.style.display = 'none';
     }
 });
