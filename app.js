@@ -1,5 +1,5 @@
 import { db, auth } from "./firebase.js";
-import { onSnapshot, collection, addDoc, getDocs, setDoc, updateDoc, doc, getDoc, } from "firebase/firestore";
+import { collection, addDoc, getDocs, setDoc, updateDoc, doc, getDoc, } from "firebase/firestore";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -25,11 +25,12 @@ const registerBtn = document.getElementById('registerBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 
 const listInput = document.getElementById('listInput');
+const categorySelect = document.getElementById('category');
 const addListBtn = document.getElementById('addListBtn');
+const itemList = document.getElementById('itemList');
 const aiInput = document.getElementById('chat-input');
 const aiButton = document.getElementById('send-btn');
 const chatHistory = document.getElementById('chat-history');
-const chatbotToggle = document.getElementById('chatbot-toggle');
 const emptyList = document.getElementById('emptyList');
 
 
@@ -108,21 +109,6 @@ auth.onAuthStateChanged((user) => {
         const userId = user.uid;
         const listRef = collection(db, "groceries", userId, "list");
 
-        const unsubscribe = onSnapshot(listRef, (snapshot) => {
-            snapshot.docChanges().forEach((change) => {
-                if (change.type === "added") {
-                    console.log("New data available offline:", change.doc.data());
-                }
-            });
-        });
-
-        window.addEventListener("online", () => {
-            console.log("Syncing data...");
-            onSnapshot(listRef, (snapshot) => {
-                snapshot.docs.forEach((doc) => console.log("Synced:", doc.data()));
-            });
-        });
-        
         const createGroceryList = async (userId, groceryItems) => {
             try {
                 const groceryRef = collection(db, "groceries", userId, "list");
@@ -195,6 +181,12 @@ auth.onAuthStateChanged((user) => {
 
         const renderList = async () => {
             const groceryList = await fetchUserGroceryList(userId);
+            const localItems = JSON.parse(localStorage.getItem('items')) || [];
+
+            const combinedItems = [...groceryList, ...localItems];
+            const uniqueItems = combinedItems.filter((item, index, self) =>
+                index === self.findIndex((i) => i.id === item.id || i.name === item.name)
+            );
 
             meat.innerHTML = "";
             dairy.innerHTML = "";
@@ -202,7 +194,7 @@ auth.onAuthStateChanged((user) => {
             fruit.innerHTML = "";
             snacks.innerHTML = "";
 
-            groceryList.forEach((item) => {
+            uniqueItems.forEach((item) => {
                 if (!item.completed) {
                     let listItem = document.createElement("li");
                     listItem.textContent = item.name;
@@ -239,7 +231,7 @@ auth.onAuthStateChanged((user) => {
             hideCategory('vegetablesList');
             hideCategory('fruitList');
             hideCategory('snacksList');
-        }
+        };
         renderList();
         getApiKey();
 
@@ -372,5 +364,40 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// const loadItems = () => {
+//     const items = JSON.parse(localStorage.getItem('items')) || [];
+//     items.forEach(item => {
+//         const listItem = document.createElement('li');
+//         listItem.textContent = `${item.name} (${item.category})`;
+//         listItem.id = item.id;
+//         itemList.appendChild(listItem);
+//     });
+// };
+
+const saveItem = (name, category) => {
+    const items = JSON.parse(localStorage.getItem('items')) || [];
+
+    const itemExists = items.some(item => item.name === name && item.category === category);
+
+    if (!itemExists) {
+        const newItem = { name, category, id: new Date().toISOString() };
+        items.push(newItem);
+        localStorage.setItem('items', JSON.stringify(items));
+    }
+};
+
+addListBtn.addEventListener('click', () => {
+    const name = listInput.value.trim();
+    const category = categorySelect.value;
+    if (name) {
+        saveItem(name, category);
+        listInput.value = '';
+        loadItems();
+    }
+});
+
+// addEventListener('load', () => {
+//     loadItems();
+// });
 
 
