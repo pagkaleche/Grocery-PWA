@@ -64,7 +64,6 @@ const loginUser = async (email, password) => {
     }
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        console.log("User logged in:", userCredential.user);
     } catch (error) {
         console.error("Login error:", error.message);
         alert("Login failed: " + error.message);
@@ -109,6 +108,8 @@ auth.onAuthStateChanged((user) => {
         const userId = user.uid;
         const listRef = collection(db, "groceries", userId, "list");
 
+        window.addEventListener('online', () => syncLocalDataWithFirestore(userId));
+
         const createGroceryList = async (userId, groceryItems) => {
             try {
                 const groceryRef = collection(db, "groceries", userId, "list");
@@ -126,12 +127,18 @@ auth.onAuthStateChanged((user) => {
             const listText = sanitizeInput(listInput.value.trim());
 
             if (listText) {
-                await createGroceryList(userId, [
-                    { name: listText, category: listCategory, completed: false }
-                ]);
-                await renderList();
+                if (isOnline()) {
+                    await createGroceryList(userId, [
+                        { name: listText, category: listCategory, completed: false }
+                    ]);
+                    await renderList();
+                    liveRegion.textContent = `New list added: ${listText}`;
+                } else {
+                    saveItem(listText, listCategory);
+                    liveRegion.textContent = `List saved locally: ${listText}`;
+                }
+
                 listInput.value = "";
-                liveRegion.textContent = `New list added: ${listText}`;
             }
         });
 
@@ -307,7 +314,6 @@ auth.onAuthStateChanged((user) => {
     }
 });
 
-// const sw = new URL('service-worker.js', import.meta.url);
 const sw = '/WebDevTrends/service-worker.js'
 if ('serviceWorker' in navigator) {
     const s = navigator.serviceWorker;
@@ -364,16 +370,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// const loadItems = () => {
-//     const items = JSON.parse(localStorage.getItem('items')) || [];
-//     items.forEach(item => {
-//         const listItem = document.createElement('li');
-//         listItem.textContent = `${item.name} (${item.category})`;
-//         listItem.id = item.id;
-//         itemList.appendChild(listItem);
-//     });
-// };
-
 const saveItem = (name, category) => {
     const items = JSON.parse(localStorage.getItem('items')) || [];
 
@@ -386,18 +382,25 @@ const saveItem = (name, category) => {
     }
 };
 
-addListBtn.addEventListener('click', () => {
-    const name = listInput.value.trim();
-    const category = categorySelect.value;
-    if (name) {
-        saveItem(name, category);
-        listInput.value = '';
-        loadItems();
+const isOnline = () => navigator.onLine;
+
+const syncLocalDataWithFirestore = async (userId) => {
+    if (isOnline()) {
+        const localItems = JSON.parse(localStorage.getItem('items')) || [];
+
+        if (localItems.length > 0) {
+            try {
+                const groceryRef = collection(db, "groceries", userId, "list");
+
+                for (const item of localItems) {
+                    await addDoc(groceryRef, item);
+                }
+
+                localStorage.removeItem('items');
+                console.log('Items successfully synced with Firestore');
+            } catch (error) {
+                console.error('Failed to sync items with Firestore:', error);
+            }
+        }
     }
-});
-
-// addEventListener('load', () => {
-//     loadItems();
-// });
-
-
+};
