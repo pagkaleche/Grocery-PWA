@@ -55,9 +55,12 @@ self.addEventListener('fetch', (event) => {
                         cache.put(event.request, networkResponse.clone());
                     }
                     return networkResponse;
-                }).catch(() => cachedResponse); 
+                }).catch(() => {
+                    return cachedResponse || new Response('No data available', { status: 503 });
+                });
                 return cachedResponse || fetchPromise;
             });
         })
     );
 });
+
