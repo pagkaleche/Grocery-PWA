@@ -315,8 +315,8 @@ auth.onAuthStateChanged((user) => {
     }
 });
 
-// const sw = new URL('service-worker.js', import.meta.url); problem
-const sw = '/WebDevTrends/service-worker.js'
+const sw = new URL('service-worker.js', import.meta.url); problem
+// const sw = '/WebDevTrends/service-worker.js'
 if ('serviceWorker' in navigator) {
     const s = navigator.serviceWorker;
     s.register(sw, {
