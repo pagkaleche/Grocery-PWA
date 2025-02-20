@@ -107,6 +107,21 @@ auth.onAuthStateChanged((user) => {
         mainContainer.style.display = 'block';
         const userId = user.uid;
         const listRef = collection(db, "groceries", userId, "list");
+
+        const unsubscribe = onSnapshot(listRef, (snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === "added") {
+                    console.log("New data available offline:", change.doc.data());
+                }
+            });
+        });
+
+        window.addEventListener("online", () => {
+            console.log("Syncing data...");
+            onSnapshot(listRef, (snapshot) => {
+                snapshot.docs.forEach((doc) => console.log("Synced:", doc.data()));
+            });
+        });
         
         const createGroceryList = async (userId, groceryItems) => {
             try {
