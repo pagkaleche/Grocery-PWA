@@ -1,6 +1,6 @@
 import { db, auth } from "./firebase.js";
 import { collection, addDoc, getDocs, setDoc, updateDoc, doc, getDoc, query, where } from "firebase/firestore";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const listIds = ['meatList', 'dairyList', 'vegetablesList', 'fruitList', 'snacksList'];
@@ -32,6 +32,7 @@ const aiInput = document.getElementById('chat-input');
 const aiButton = document.getElementById('send-btn');
 const chatHistory = document.getElementById('chat-history');
 const emptyList = document.getElementById('emptyList');
+const googleSignIn = document.getElementById('googleLogin');
 
 registerLink.addEventListener('click', (event) => {
     event.preventDefault();
@@ -45,7 +46,6 @@ const registerUser = async (email, password) => {
         const user = userCredential.user;
 
         await addUserToFirestore(user.uid, user.email);
-        await registerBiometricUser(user.uid);
         registerForm.style.display = 'none';
         loginForm.style.display = 'flex';
         await signOut(auth);
@@ -56,54 +56,13 @@ const registerUser = async (email, password) => {
     }
 };
 
-const registerBiometricUser = async (userId) => {
-    try {
-        const response = await fetch('https://webdevtrends-backend-f2lc0uy7j-adrians-projects-9bcf57a3.vercel.app/api/webAuthReg', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId })
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to generate WebAuthn challenge');
-        }
-
-        const options = await response.json();
-
-        const credential = await navigator.credentials.create({
-            publicKey: options
-        });
-
-        const isValid = await verifyWebAuthnCredential(credential, options);
-
-        if (isValid) {
-            await updateDoc(doc(db, "users", userId), {
-                biometricCredential: {
-                    id: credential.id,
-                    publicKey: credential.publicKey,
-                }
-            });
-            console.log("Biometric registration successful.");
-        } else {
-            console.error("Invalid credential.");
-        }
-    } catch (error) {
-        console.error("Biometric registration failed: ", error);
-    }
-};
-
-const addUserToFirestore = async (userId, email, credential) => {
+const addUserToFirestore = async (userId, email) => {
     try {
         const userDocRef = doc(db, "users", userId);
         
         const userData = {
             email: email,
             createdAt: new Date(),
-            biometricCredential: {
-                credentialId: credential.id,
-                publicKey: credential.publicKey,
-                createdAt: new Date(), 
-            }
         };
 
         await setDoc(userDocRef, userData);  
@@ -123,8 +82,6 @@ const loginUser = async (email, password) => {
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         alert("Login successful.");
-        mainContainer.style.display = 'block';
-        logoutBtn.style.display = 'block';
     } catch (error) {
         console.error("Login error:", error.message);
 
@@ -140,6 +97,21 @@ loginBtn.addEventListener('click', async () => {
     const email = emailInput.value;
     const password = passwordInput.value;
     await loginUser(email, password);
+});
+
+googleSignIn.addEventListener('click', async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        
+        await addUserToFirestore(user.uid, user.email);
+
+        alert("Login successful.");
+    } catch (error) {
+        console.error("Login error:", error.message);
+        alert("Login failed: " + error.message);
+    }
 });
 
 registerUserBtn.addEventListener('click', async () => {
@@ -166,9 +138,9 @@ function sanitizeInput(input) {
 
 auth.onAuthStateChanged((user) => {
     if (user) {
-        // logoutBtn.style.display = 'block';
+        logoutBtn.style.display = 'block';
         loginForm.style.display = 'none';
-        // mainContainer.style.display = 'block';
+        mainContainer.style.display = 'block';
         const userId = user.uid;
 
         window.addEventListener('online', async () => {
