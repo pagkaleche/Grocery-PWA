@@ -1,5 +1,5 @@
 import { db, auth } from "./firebase.js";
-import { collection, addDoc, getDocs, setDoc, updateDoc, doc, getDoc, } from "firebase/firestore";
+import { collection, addDoc, getDocs, setDoc, updateDoc, doc, getDoc, query, where } from "firebase/firestore";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "firebase/auth";
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -18,21 +18,26 @@ const snacks = lists['snacksList'];
 
 const emailInput = document.getElementById("email");
 const passwordInput = document.getElementById("password");
+const regEMail = document.getElementById("regEmail");
+const regPass = document.getElementById("regPass");
 const loginBtn = document.getElementById("loginBtn");
+const registerLink = document.getElementById('registerLink');
 const loginForm = document.getElementById('login-form');
 const mainContainer = document.getElementById('main-container');
-const registerBtn = document.getElementById('registerBtn');
 const logoutBtn = document.getElementById('logoutBtn');
-
-const listInput = document.getElementById('listInput');
-const categorySelect = document.getElementById('category');
+const registerForm = document.getElementById('register-form');
+const registerUserBtn = document.getElementById('registerUser');
 const addListBtn = document.getElementById('addListBtn');
-const itemList = document.getElementById('itemList');
 const aiInput = document.getElementById('chat-input');
 const aiButton = document.getElementById('send-btn');
 const chatHistory = document.getElementById('chat-history');
 const emptyList = document.getElementById('emptyList');
 
+registerLink.addEventListener('click', (event) => {
+    event.preventDefault();
+    loginForm.style.display = 'none';
+    registerForm.style.display = 'flex';
+});
 
 const registerUser = async (email, password) => {
     try {
@@ -40,47 +45,106 @@ const registerUser = async (email, password) => {
         const user = userCredential.user;
 
         await addUserToFirestore(user.uid, user.email);
+        await registerBiometricUser(user.uid);
+        registerForm.style.display = 'none';
+        loginForm.style.display = 'flex';
+        await signOut(auth);
+        alert("Registration successful.");
     } catch (error) {
+        alert("Registration failed: Email already in use.");
         console.error("Error during registration: ", error.message);
     }
 };
 
-const addUserToFirestore = async (userId, email) => {
+const registerBiometricUser = async (userId) => {
+    try {
+        const response = await fetch('https://webdevtrends-backend-f2lc0uy7j-adrians-projects-9bcf57a3.vercel.app/api/webAuthReg', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId })
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to generate WebAuthn challenge');
+        }
+
+        const options = await response.json();
+
+        const credential = await navigator.credentials.create({
+            publicKey: options
+        });
+
+        const isValid = await verifyWebAuthnCredential(credential, options);
+
+        if (isValid) {
+            await updateDoc(doc(db, "users", userId), {
+                biometricCredential: {
+                    id: credential.id,
+                    publicKey: credential.publicKey,
+                }
+            });
+            console.log("Biometric registration successful.");
+        } else {
+            console.error("Invalid credential.");
+        }
+    } catch (error) {
+        console.error("Biometric registration failed: ", error);
+    }
+};
+
+const addUserToFirestore = async (userId, email, credential) => {
     try {
         const userDocRef = doc(db, "users", userId);
-        await setDoc(userDocRef, {
+        
+        const userData = {
             email: email,
             createdAt: new Date(),
-        });
+            biometricCredential: {
+                credentialId: credential.id,
+                publicKey: credential.publicKey,
+                createdAt: new Date(), 
+            }
+        };
+
+        await setDoc(userDocRef, userData);  
+        console.log("User data with biometric credentials added to Firestore.");
     } catch (error) {
         console.error("Error adding user to Firestore: ", error.message);
     }
 };
 
+
 const loginUser = async (email, password) => {
     if (!email || !password) {
-        console.error("Email and password are required.");
+        alert("Email and password are required.");
         return;
     }
+
     try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        alert("Login successful.");
+        mainContainer.style.display = 'block';
+        logoutBtn.style.display = 'block';
     } catch (error) {
         console.error("Login error:", error.message);
-        alert("Login failed: " + error.message);
+
+        if (error.code === "auth/invalid-credential") {
+            alert("Login failed: Incorrect password.");
+        } else {
+            alert("Login failed: " + error.message);
+        }
     }
 };
 
 loginBtn.addEventListener('click', async () => {
     const email = emailInput.value;
     const password = passwordInput.value;
-    console.log("Logging in with email:", email, "and password", password
-    );
     await loginUser(email, password);
 });
 
-registerBtn.addEventListener('click', async () => {
-    const email = emailInput.value;
-    const password = passwordInput.value;
+registerUserBtn.addEventListener('click', async () => {
+    const email = regEMail.value;
+    const password = regPass.value;
     await registerUser(email, password);
 });
 
@@ -88,7 +152,7 @@ logoutBtn.addEventListener('click', async () => {
     try {
         await signOut(auth);
         window.location.reload();
-        console.log("User signed out.");
+        alert("Logged out successfully.");
     } catch (error) {
         console.error("Error signing out:", error);
     }
@@ -102,13 +166,15 @@ function sanitizeInput(input) {
 
 auth.onAuthStateChanged((user) => {
     if (user) {
-        logoutBtn.style.display = 'block';
+        // logoutBtn.style.display = 'block';
         loginForm.style.display = 'none';
-        mainContainer.style.display = 'block';
+        // mainContainer.style.display = 'block';
         const userId = user.uid;
-        const listRef = collection(db, "groceries", userId, "list");
 
-        window.addEventListener('online', () => syncLocalDataWithFirestore(userId));
+        window.addEventListener('online', async () => {
+            await syncLocalDataWithFirestore(userId);
+            await renderList();
+        });
 
         const createGroceryList = async (userId, groceryItems) => {
             try {
@@ -134,10 +200,10 @@ auth.onAuthStateChanged((user) => {
                     await renderList();
                     liveRegion.textContent = `New list added: ${listText}`;
                 } else {
-                    saveItem(listText, listCategory);
+                    saveItem(listText, listCategory, false);
                     liveRegion.textContent = `List saved locally: ${listText}`;
+                    loadList();
                 }
-
                 listInput.value = "";
             }
         });
@@ -146,24 +212,36 @@ auth.onAuthStateChanged((user) => {
             list.addEventListener('click', async (e) => {
                 if (e.target.tagName === 'LI') {
                     const itemId = e.target.id;
+                    const itemText = e.target.textContent;
 
                     if (!itemId) {
                         console.error("No item ID found on the clicked element");
                         return;
                     }
+                    if (isOnline()) {
+                        try {
+                            await updateDoc(doc(db, "groceries", userId, "list", itemId), { completed: true });
+                            liveRegion.textContent = `Completed.`;
 
-                    try {
-                        await updateDoc(doc(db, "groceries", userId, "list", itemId), { completed: true });
-                        liveRegion.textContent = `Completed.`;
+                            setTimeout(async () => {
+                                await renderList();
+                                liveRegion.textContent = `Ready.`;
+                                console.log(liveRegion.textContent);
+                            }, 1000);
+                        } catch (error) {
+                            console.error("Error updating document: ", error);
+                            liveRegion.textContent = `Error: Could not complete the item.`;
+                        }
+                    } else {
+                        const items = JSON.parse(localStorage.getItem('items')) || [];
+                        const item = items.find(item => item.name === itemText);
 
-                        setTimeout(async () => {
-                            await renderList();
-                            liveRegion.textContent = `Ready.`;
-                            console.log(liveRegion.textContent);
-                        }, 1000);
-                    } catch (error) {
-                        console.error("Error updating document: ", error);
-                        liveRegion.textContent = `Error: Could not complete the item.`;
+                        if (item) {
+                            item.completed = true;
+                            localStorage.setItem('items', JSON.stringify(items));
+                            liveRegion.textContent = `List marked as complete.`;
+                            loadList();
+                        }
                     }
                 }
             });
@@ -186,15 +264,58 @@ auth.onAuthStateChanged((user) => {
             }
         };
 
+        function loadList() {
+            const items = JSON.parse(localStorage.getItem('items')) || [];
+            meat.innerHTML = "";
+            dairy.innerHTML = "";
+            vegetable.innerHTML = "";
+            fruit.innerHTML = "";
+            snacks.innerHTML = "";
+
+            const incompleteItems = items.filter(item => !item.completed);
+            incompleteItems.forEach(item => {
+                const listItem = document.createElement('li');
+                listItem.textContent = item.name;
+                listItem.id = item.id;
+                listItem.setAttribute('tabindex', '0');
+                if (item.completed) {
+                    listItem.style.textDecoration = 'line-through';
+                }
+                switch (item.category) {
+                    case 'meat':
+                        meat.appendChild(listItem);
+                        break;
+                    case 'dairy':
+                        dairy.appendChild(listItem);
+                        break;
+                    case 'vegetables':
+                        vegetable.appendChild(listItem);
+                        break;
+                    case 'fruits':
+                        fruit.appendChild(listItem);
+                        break;
+                    case 'snacks':
+                        snacks.appendChild(listItem);
+                        break;
+                    default:
+                        break;
+                }
+            });
+            hideCategory('meatList');
+            hideCategory('dairyList');
+            hideCategory('vegetablesList');
+            hideCategory('fruitList');
+            hideCategory('snacksList');
+        }
+
         const renderList = async () => {
             const groceryList = await fetchUserGroceryList(userId);
             const localItems = JSON.parse(localStorage.getItem('items')) || [];
 
             const combinedItems = [...groceryList, ...localItems];
             const uniqueItems = combinedItems.filter((item, index, self) =>
-                index === self.findIndex((i) => i.id === item.id || i.name === item.name)
+                index === self.findIndex((i) => i.id === item.id || i.name === item.name && i.category === item.category)
             );
-
             meat.innerHTML = "";
             dairy.innerHTML = "";
             vegetable.innerHTML = "";
@@ -207,6 +328,8 @@ auth.onAuthStateChanged((user) => {
                     listItem.textContent = item.name;
                     listItem.id = item.id;
                     listItem.setAttribute('tabindex', '0');
+
+                    saveItem(item.name, item.category);
 
                     if (item.completed) {
                         listItem.style.textDecoration = "line-through";
@@ -239,8 +362,12 @@ auth.onAuthStateChanged((user) => {
             hideCategory('fruitList');
             hideCategory('snacksList');
         };
-        renderList();
-        getApiKey();
+        if (isOnline()) {
+            renderList();
+            getApiKey();
+        } else {
+            loadList();
+        }
 
         let model
         async function getApiKey() {
@@ -370,13 +497,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-const saveItem = (name, category) => {
+const saveItem = (name, category, completed) => {
     const items = JSON.parse(localStorage.getItem('items')) || [];
 
     const itemExists = items.some(item => item.name === name && item.category === category);
 
     if (!itemExists) {
-        const newItem = { name, category, id: new Date().toISOString() };
+        const newItem = { name, category, completed: false };
         items.push(newItem);
         localStorage.setItem('items', JSON.stringify(items));
     }
@@ -393,11 +520,18 @@ const syncLocalDataWithFirestore = async (userId) => {
                 const groceryRef = collection(db, "groceries", userId, "list");
 
                 for (const item of localItems) {
-                    await addDoc(groceryRef, item);
+                    const itemQuery = query(groceryRef, where("name", "==", item.name));
+                    const querySnapshot = await getDocs(itemQuery);
+
+                    if (querySnapshot.empty) {
+                        await addDoc(groceryRef, item);
+                    } else {
+                        const docRef = doc(db, "groceries", userId, "list", querySnapshot.docs[0].id);
+                        await setDoc(docRef, item, { merge: true });
+                    }
                 }
 
                 localStorage.removeItem('items');
-                console.log('Items successfully synced with Firestore');
             } catch (error) {
                 console.error('Failed to sync items with Firestore:', error);
             }
