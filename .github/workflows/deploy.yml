@@ -1,31 +1,55 @@
-name: Deploy Vanilla JavaScript PWA Checklist App
+name: Deploy Vanilla JavaScript PWA Grocery App
+
 on:
- push:
-  branches:
-  - main
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
- build-and-deploy:
-  runs-on: ubuntu-latest
+  lint-and-test:
+    runs-on: ubuntu-latest
 
-  steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Install Dependencies (if any)
-      run: |
-        if [ -f package.json ]; then
-        npm install
-        fi
-    - name: Build Project (if any build step exists)
-      run: |
-        if [ -f package.json ]; then
-        npm run build
-        fi
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./dist
-    - name: Run linting
-      run: npm run lint
+      - name: Install Dependencies (if any)
+        run: |
+          if [ -f package.json ]; then
+            npm install
+          fi
+
+      - name: Run Linting
+        run: npm run lint
+
+      - name: Run Tests (if applicable)
+        run: npm test
+
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    needs: lint-and-test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Dependencies (if any)
+        run: |
+          if [ -f package.json ]; then
+            npm install
+          fi
+
+      - name: Build Project (if any build step exists)
+        run: |
+          if [ -f package.json ]; then
+            npm run build  # Run build step if needed
+          fi
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
