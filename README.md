@@ -15,7 +15,7 @@ A simple and lightweight Progressive Web App (PWA) for managing a grocery list. 
 
 ## 🚀 Live Demo
 
-> [[🔗 Try it here]((https://pagkaleche.github.io/WebDevTrends/))
+> [[🔗 Try it here](https://pagkaleche.github.io/WebDevTrends/)
 
 ---
 
